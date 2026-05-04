@@ -8,7 +8,7 @@ class RoadmapNode(BaseModel):
     is_locked: bool = True
     is_completed: bool = False
     node_type: str = "breadcrumb" # start, breadcrumb, milestone, finish
-    position_index: int 
+    position_index: int           # For the zigzag layout logic
     xp_value: int = 150
 
 class ProjectRoadmap(BaseModel):
@@ -17,7 +17,7 @@ class ProjectRoadmap(BaseModel):
     category: str
     nodes: List[RoadmapNode]
     current_streak: int = 0
-    total_progress: float = 0.0
+    total_progress: float = 0.0 # (completed_nodes / total_nodes) * 100
 
 class ProjectRequest(BaseModel):
     project_name: str

@@ -1,32 +1,57 @@
 import os
 import json
-import google.generativeai as genai
+from google import genai
 from dotenv import load_dotenv
 
 load_dotenv()
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 class AtomizerAI:
     def __init__(self):
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        # The new SDK automatically looks for GOOGLE_API_KEY in env
+        self.client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+        self.model_id = "gemini-2.5-flash"
+
+    async def _determine_scope(self, project_name: str) -> str:
+        prompt = f"Categorize the project '{project_name}' as 'SHORT' or 'LONG'. Return only the word."
+        try:
+            # New SDK syntax: models.generate_content
+            response = self.client.models.generate_content(
+                model=self.model_id, 
+                contents=prompt
+            )
+            return response.text.strip().upper()
+        except Exception as e:
+            print(f"Scope Error: {e}")
+            return "LONG"
 
     async def generate_roadmap(self, project_name: str, category: str) -> list:
-        # assuming if we need 10 steps (it should be more if the task is bigger, but let's keep it simple for now)
+        scope = await self._determine_scope(project_name)
+        scope_instruction = "the entire project" if scope == "SHORT" else "only the FIRST PHASE"
+
         prompt = f"""
-        Break the project '{project_name}' in category '{category}' into 10 tiny, 15-minute steps.
-        First step must be brain-dead easy. Use encouraging language.
-        Return ONLY a JSON array of strings.
+        Break '{project_name}' ({category}) into tiny, 15-minute steps.
+        Focus on {scope_instruction}.
+        Return ONLY a JSON array of strings. 
         Example: ["Step 1", "Step 2"]
         """
+        
         try:
-            response = self.model.generate_content(prompt)
+            response = self.client.models.generate_content(
+                model=self.model_id, 
+                contents=prompt
+            )
             return self._parse_ai_response(response.text)
-        except Exception:
-            return [f"Start {project_name}", "Gather tools", "Draft ideas", "Step 4", "Step 5", "Step 6", "Step 7", "Step 8", "Step 9", "Final Polish"]
+        except Exception as e:
+            print(f"Generation Error: {e}")
+            # Dynamic fallback that at least uses the project name
+            return [f"Plan {project_name}", "Gather materials", "Setup workspace", "Step 4", "Step 5", "Step 6", "Step 7", "Step 8", "Step 9", "Final Review"]
 
     def _parse_ai_response(self, raw_text: str) -> list:
         try:
+            # The new SDK is better at stripping markdown, but we'll be safe
             clean_text = raw_text.replace("```json", "").replace("```", "").strip()
-            return json.loads(clean_text)[:10]
-        except:
-            return ["Initialization", "Research", "Drafting", "Refining", "Finishing"]
+            tasks = json.loads(clean_text)
+            return tasks[:10]
+        except Exception as e:
+            print(f"Parsing Error: {e}")
+            return ["Start", "Research", "Draft", "Refine", "Complete"]
