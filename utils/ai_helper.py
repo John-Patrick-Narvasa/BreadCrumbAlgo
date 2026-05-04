@@ -11,6 +11,7 @@ class AtomizerAI:
         self.model = genai.GenerativeModel('gemini-1.5-flash')
 
     async def generate_roadmap(self, project_name: str, category: str) -> list:
+        # assuming if we need 10 steps (it should be more if the task is bigger, but let's keep it simple for now)
         prompt = f"""
         Break the project '{project_name}' in category '{category}' into 10 tiny, 15-minute steps.
         First step must be brain-dead easy. Use encouraging language.
