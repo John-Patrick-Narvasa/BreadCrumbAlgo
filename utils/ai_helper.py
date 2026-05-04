@@ -12,7 +12,28 @@ class AtomizerAI:
         self.model_id = "gemini-2.5-flash"
 
     async def _determine_scope(self, project_name: str) -> str:
-        prompt = f"Categorize the project '{project_name}' as 'SHORT' or 'LONG'. Return only the word."
+        prompt = (
+            f"Analyze the project '{project_name}'. "
+            "Return a JSON object with 'scope' (SHORT/LONG) and 'recommended_steps' (integer between 5 and 15)."
+            """You are a world-class Executive Function Consultant specializing in ADHD productivity. 
+            Your goal is to eliminate 'Task Paralysis' for the project: '{project_name}' ({category}).
+
+            ### STRATEGY: MICRO-ATOMIZATION
+            Since this is a {scope} project, you will focus on {scope_instruction}. 
+            Break this down into EXACTLY {step_count} nodes.
+
+            ### HARD RULES (LOGIC)
+            1. NO FLUFF: Every step must be a concrete, physical action.
+            2. BRAIN-DEAD START: Step 1 must be so easy it's impossible to fail (e.g., "Touch the keyboard," "Sit at the desk," "Open a blank tab").
+            3. 15-MINUTE CAP: No single step should take longer than 15 minutes of focused effort.
+            4. VERB-FIRST: Every string must start with a high-momentum verb (e.g., "Draft," "Gather," "Click," "Sketch").
+            5. NO SUB-LISTS: Do not include nested steps. One thought per breadcrumb.
+
+            ### OUTPUT FORMAT
+            - Return ONLY a raw JSON array of strings.
+            - NO markdown formatting (no ```json).
+            - NO conversational filler."""
+        )
         try:
             # New SDK syntax: models.generate_content
             response = self.client.models.generate_content(
@@ -51,7 +72,7 @@ class AtomizerAI:
             # The new SDK is better at stripping markdown, but we'll be safe
             clean_text = raw_text.replace("```json", "").replace("```", "").strip()
             tasks = json.loads(clean_text)
-            return tasks[:10]
+            return tasks
         except Exception as e:
             print(f"Parsing Error: {e}")
             return ["Start", "Research", "Draft", "Refine", "Complete"]
