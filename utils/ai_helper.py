@@ -7,7 +7,7 @@ load_dotenv()
 class AtomizerAI:
     def __init__(self):
         self.client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-        self.model_id = "gemini-2.0-flash" # Optimized for speed/cost
+        self.model_id = "gemini-2.5-flash" # Optimized for speed/cost
 
     async def _determine_scope(self, project_name: str): # 1. ADDED
         prompt = f"Analyze '{project_name}'. Return ONLY JSON: {{'scope': 'SHORT'|'LONG', 'steps': int}}"
@@ -16,7 +16,6 @@ class AtomizerAI:
 
     async def generate_roadmap(self, project_name: str, category: str) -> list:
         scope_data = await self._determine_scope(project_name)
-        # 2. MODIFIED: Strict ADHD-friendly prompt engineering
         prompt = f"""
         Break '{project_name}' ({category}) into {scope_data['steps']} microscopic steps.
         RULES:

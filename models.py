@@ -38,6 +38,6 @@ class RewardUpdate(BaseModel):
     is_pomodoro_complete: bool = True
 
 class UserDashboard(BaseModel):
-    streak_count: int = 5
-    total_points: int = 500
-    level_progress: float = 45.5
+    streak_count: int = 96
+    total_points: int = 850
+    level_progress: float = 85.0
